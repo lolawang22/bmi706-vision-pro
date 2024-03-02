@@ -38,7 +38,7 @@ pages = {
 
 # Sidebar for navigation
 st.sidebar.title("Navigation")
-selection = st.sidebar.radio("Go to", list(pages.keys()))
+selection = st.sidebar.success("Select a Question.")
 
 # Display the selected page using the dictionary
 page = pages[selection]
