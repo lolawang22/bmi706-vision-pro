@@ -124,7 +124,7 @@ def page2():
 ### Page 3 ###
 ## Question: Does the time of day or week of ICU admission affect patients’ outcomes or complications?
 def page3():
-    st.title("The relationship between the time of day or week of ICU admission and patients’ outcomes or complications")
+    st.title("The relationship between ICU admission time (24h), length (days) and patients’ outcomes")
 
     mortality = df[['icu_los_day', 'hour_icu_intime', 'censor_flg']].copy()
     
