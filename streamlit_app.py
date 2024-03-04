@@ -144,8 +144,6 @@ def page3():
         mortality_rate=('censor_flg', lambda x: (x==0).mean())
     ).reset_index()
 
-    st.dataframe(mortality)
-
     chart = alt.Chart(mortality).mark_rect().encode(
         x=alt.X('icu_los_day_group:O', sort=days, title='ICU Length of Stay (days)'), 
         y=alt.Y('hour_icu_int_group:O', sort=intime_labels, title='ICU Admission Hour (24h)'), 
@@ -156,16 +154,18 @@ def page3():
         brush
     ).properties(
         title='Mortality Rate of ICU Length of Stay vs. Admission Hour',
-        width=500
+        width=500,
+        height=150
     )
 
     bar_chart = alt.Chart(mortality).mark_bar().encode(
         x=alt.X('sum(death_count):Q', title='Sum of Deaths'),
-        y=alt.Y('icu_los_day_group:O', sort='-x'),
+        y=alt.Y('icu_los_day_group:O', sort='-x', title='ICU Length of Stay (days)'),
         tooltip=['icu_los_day_group:O', 'sum(death_count):Q']
     ).transform_filter(
         brush
     ).properties(
+        title='Deaths Counts by ICU Length of Stay',
         height=150,
         width=500
     )
