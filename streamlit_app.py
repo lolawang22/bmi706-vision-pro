@@ -144,6 +144,8 @@ def page3():
         mortality_rate=('censor_flg', lambda x: (x==0).mean())
     ).reset_index()
 
+    st.dataframe(mortality)
+
     chart = alt.Chart(mortality).mark_rect().encode(
         x=alt.X('icu_los_day_group:O', sort=days, title='ICU Length of Stay (days)'), 
         y=alt.Y('hour_icu_int_group:O', sort=intime_labels, title='ICU Admission Hour (24h)'), 
