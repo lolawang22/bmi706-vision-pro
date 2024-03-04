@@ -251,7 +251,7 @@ pages = {
     "Main Page": main_page,
     "Question 1: What is the relationship between the patient’s demographic and the outcomes of arterial catheterization?": page1,
     "Question 2: How do initial clinical assessments and vital signs correlate with the length of stay in ICU or hospital?": page2,
-    "Question 3: Does the time of day or week of ICU admission affect patients’ outcomes or complications?": page3,
+    "Question 3: What are the relationships between ICU admission time (24h), length (days) and patients’ outcomes?": page3,
 }
 
 # Sidebar for navigation
