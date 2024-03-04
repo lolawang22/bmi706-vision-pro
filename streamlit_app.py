@@ -126,7 +126,7 @@ def page2():
 def page3():
     st.title("The relationship between the time of day or week of ICU admission and patients’ outcomes or complications")
 
-    mortality = df[['icu_los_day', 'hour_icu_int', 'censor_flg']].copy()
+    mortality = df[['icu_los_day', 'hour_icu_intime', 'censor_flg']].copy()
     
     brush = alt.selection_interval(encodings=['x'])
 
@@ -136,7 +136,7 @@ def page3():
 
     intime_bins = [-0.01, 6, 12, 18, 24]
     intime_labels = ['Hour 0-6', 'Hour 7-12', 'Hour 13-18', 'Hour 19-24']
-    mortality['hour_icu_int_group'] = pd.cut(mortality['hour_icu_int'], bins=intime_bins, labels=intime_labels, right=True)
+    mortality['hour_icu_int_group'] = pd.cut(mortality['hour_icu_intime'], bins=intime_bins, labels=intime_labels, right=True)
 
     mortality = mortality.groupby(['icu_los_day_group', 'hour_icu_int_group']).agg(
         death_count=('censor_flg', lambda x: (x==0).sum()),
