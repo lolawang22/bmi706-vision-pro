@@ -125,7 +125,50 @@ def page2():
 ## Question: Does the time of day or week of ICU admission affect patients’ outcomes or complications?
 def page3():
     st.title("The relationship between the time of day or week of ICU admission and patients’ outcomes or complications")
-    st.write("This is the content of the third page.")
+
+    mortality = df[['icu_los_day', 'hour_icu_int', 'censor_flg']].copy()
+    
+    brush = alt.selection_interval(encodings=['x'])
+
+    days_bins = [0, 5, 10, 15, 20, 25, float('inf')]
+    days = ['Day 0-5', 'Day 6-10', 'Day 11-15', 'Day 16-20', 'Day 21-25', 'Day 26+']
+    mortality['icu_los_day_group'] = pd.cut(mortality['icu_los_day'], bins=days_bins, labels=days, right=False)
+
+    intime_bins = [-0.01, 6, 12, 18, 24]
+    intime_labels = ['Hour 0-6', 'Hour 7-12', 'Hour 13-18', 'Hour 19-24']
+    mortality['hour_icu_int_group'] = pd.cut(mortality['hour_icu_int'], bins=intime_bins, labels=intime_labels, right=True)
+
+    mortality = mortality.groupby(['icu_los_day_group', 'hour_icu_int_group']).agg(
+        death_count=('censor_flg', lambda x: (x==0).sum()),
+        patient_count=('censor_flg', 'size'),
+        mortality_rate=('censor_flg', lambda x: (x==0).mean())
+    ).reset_index()
+
+    chart = alt.Chart(mortality).mark_rect().encode(
+        x=alt.X('icu_los_day_group:O', sort=days, title='ICU Length of Stay (days)'), 
+        y=alt.Y('hour_icu_int_group:O', sort=intime_labels, title='ICU Admission Hour (24h)'), 
+        color=alt.Color('mortality_rate:Q',
+                        legend=alt.Legend(title="Mortality rate")),
+        tooltip=['mortality_rate:Q'] 
+    ).add_selection(
+        brush
+    ).properties(
+        title='Mortality Rate of ICU Length of Stay vs. Admission Hour',
+        width=500
+    )
+
+    bar_chart = alt.Chart(mortality).mark_bar().encode(
+        x=alt.X('sum(death_count):Q', title='Sum of Deaths'),
+        y=alt.Y('icu_los_day_group:O', sort='-x'),
+        tooltip=['icu_los_day_group:O', 'sum(death_count):Q']
+    ).transform_filter(
+        brush
+    ).properties(
+        height=150,
+        width=500
+    )
+
+    st.altair_chart(chart & bar_chart, use_container_width=True)
 
 
 # Dictionary of pages
