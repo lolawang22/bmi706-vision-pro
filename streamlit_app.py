@@ -1,7 +1,9 @@
 import altair as alt
 import pandas as pd
 import streamlit as st
+import numpy as np
 from sklearn.impute import SimpleImputer
+from sklearn.ensemble import RandomForestRegressor
 
 @st.cache_data
 def load_data():
@@ -60,7 +62,7 @@ def page1():
     
     # Add radio buttons for gender
     gender = st.radio("Gender", ["M", "F"])
-    subset = df[df["gender"] == gender]
+    subset = df[(df["gender"] == gender) & (df["aline_flg"] == 1)]
     
     # Add multiselect options for age range
     age_default = [
@@ -119,7 +121,79 @@ def page1():
 
 def page2():
     st.title("The correlation of initial clinical assessments and vital signs with the length of stay in ICU or hospital")
-    st.write("This is the content of the second page.")
+    
+    # Add radio buttons for choosing patient initial score
+    score_option = st.radio("Patient Initial Score", ["SAPS I Score", "SOFA Score"])
+    if score_option == "SAPS I Score":
+        score_column = "sapsi_first"
+    elif score_option == "SOFA Score":
+        score_column = "sofa_first"
+
+    # Add radio buttons for choosing patient length of stay
+    los_option = st.radio("Patient Length of Stay", ["Days in ICU", "Days in Hospital"])
+    if los_option == "Days in ICU":
+        los_column = "icu_los_day"
+    elif los_option == "Days in Hospital":
+        los_column = "hospital_los_day"
+
+    # Add multiselect options for patient initial clinical observation
+    obs_option = ['map_1st', 'hr_1st', 'temp_1st', 'spo2_1st', 'abg_count', 'wbc_first', 'hgb_first', 'platelet_first', 'sodium_first', 
+                  'potassium_first', 'tco2_first', 'chloride_first', 'bun_first', 'creatinine_first', 'po2_first', 'pco2_first']
+    obs_default = [
+        "hr_1st",
+        "temp_1st",
+        "potassium_first", 
+        "tco2_first",
+    ]
+    obs = st.multiselect("Patient Initial Clinical Observation", obs_option, obs_default)
+
+    # Create scatter plot for selected patient initial score and length of stay
+    scatter_chart = alt.Chart(df).mark_circle(size=60).encode(
+        x=alt.X(score_column, title="Patient Initial Score"),
+        y=alt.Y(los_column, title="Patient Length of Stay"),
+        tooltip=[alt.Tooltip(score_column, title='Score'), alt.Tooltip(los_column, title='LOS')]
+    ).properties(
+        width=600,
+        height=400,
+        title=f"Scatter Plot of Patient {score_option} vs. {los_option}"
+    )
+    st.altair_chart(scatter_chart, use_container_width=True)
+    
+    # Perform machine learning feature selection if there are too many variables chosen
+    if obs:
+        selected_features = obs + [score_column, los_column]
+        subset_df = df[selected_features]
+
+        if len(obs) > 3:
+            X = subset_df[obs]
+            y = subset_df[los_column]
+            model = RandomForestRegressor(n_estimators=100, random_state=42)
+            model.fit(X, y)
+            importances = model.feature_importances_
+            indices = np.argsort(importances)[-3:]
+            top_vars = [obs[i] for i in indices]
+        else:
+            top_vars = obs
+
+        top_vars += [score_column, los_column]
+        corr_df = subset_df[top_vars].corr()
+
+        corr_df.reset_index(inplace=True)
+        corr_df = corr_df.melt(id_vars='index', var_name='Variable', value_name='Correlation')
+        
+        # Create heatmap for the correlation between clinical variables and length of stay
+        clinical_LOS_chart = alt.Chart(corr_df).mark_rect().encode(
+            x=alt.X('Variable:N', title='Variable'),
+            y=alt.Y('index:N', title=''),
+            color='Correlation:Q',
+            tooltip=['Variable', 'index', 'Correlation']
+        ).properties(
+            width=600, 
+            height=400, 
+            title="Correlation matrix of selected clinical measurements and length of stay")
+
+        st.altair_chart(clinical_LOS_chart, use_container_width=True)
+
 
 ### Page 3 ###
 ## Question: Does the time of day or week of ICU admission affect patients’ outcomes or complications?
@@ -172,7 +246,6 @@ def page3():
 
     st.altair_chart(chart & bar_chart, use_container_width=True)
 
-
 # Dictionary of pages
 pages = {
     "Main Page": main_page,
@@ -188,4 +261,3 @@ selection = st.sidebar.selectbox("Go to", list(pages.keys()))
 # Display the selected page using the dictionary
 page = pages[selection]
 page()
-
